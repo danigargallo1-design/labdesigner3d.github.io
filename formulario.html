@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulario de Contacto</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    body {
+      background: #121212;
+      color: #EEE;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      background: #1B1B1B;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 20px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    label {
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+
+    input, textarea {
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #121212;
+      color: #EEE;
+      font-size: 14px;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #0D47A1;
+    }
+
+    button {
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      background: #0D47A1;
+      color: #fff;
+      font-weight: 500;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #1565C0;
+    }
+
+    a.back {
+      display: block;
+      margin-top: 30px;
+      color: #888;
+      text-decoration: none;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    a.back:hover {
+      color: #fff;
+    }
+
+    #confirmation {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #0D47A1;
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transform: translateY(-20px);
+  z-index: 1000;
+}
+#confirmation.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Formulario de Contacto</h1>
+    <form id="contactForm" method="POST">
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" name="nombre" required>
+
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="mensaje">Mensaje</label>
+      <textarea id="mensaje" name="mensaje" rows="5" required></textarea>
+
+      <button type="submit">Enviar</button>
+    </form>
+    <a href="index.html" class="back">← Volver a inicio</a>
+  </div>
+<div id="confirmation">
+  ¡Mensaje enviado! Te responderemos pronto.
+</div>
+
+
+<script>
+const form = document.getElementById('contactForm');
+const confirmation = document.getElementById('confirmation');
+
+form.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const formData = new FormData(form);
+
+  fetch('https://formspree.io/f/mqarvqak', { 
+    method: 'POST',
+    body: formData,
+    headers: { 'Accept': 'application/json' }
+  }).then(response => {
+    if (response.ok) {
+      form.reset();
+      confirmation.classList.add('show');
+      // Desaparece después de 3 segundos
+      setTimeout(() => {
+        confirmation.classList.remove('show');
+      }, 3000);
+    } else {
+      alert('Hubo un error, intenta de nuevo.');
+    }
+  }).catch(() => {
+    alert('Hubo un error, intenta de nuevo.');
+  });
+});
+
+</script>
+
+</body>
+</html>
