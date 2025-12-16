@@ -397,6 +397,44 @@
   }
 }
 
+/* Cards productos más pequeños en móvil */
+@media (max-width: 600px) {
+  .cards {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+  }
+  .card {
+    padding: 16px;
+  }
+  .card img {
+    height: 120px;
+  }
+  .card h4 {
+    font-size: 14px;
+  }
+  .card p {
+    font-size: 13px;
+  }
+  .btn {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+}
+
+/* Contactos en fila horizontal */
+@media (max-width: 600px) {
+  #contactos .cards {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  #contactos .card {
+    flex: 1 1 48%;
+    padding: 16px;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -444,21 +482,22 @@
     </div>
   </section>
 
-  <section id="contactos" class="fade-in">
-    <h3>Contacto</h3>
-    <div class="cards">
-      <div class="card">
-        <h4>WhatsApp</h4>
-        <p>Contacta con nosotros para pedidos rápidos o dudas.</p>
-        <a href="https://wa.me/1234567890" target="_blank" class="btn btn-primary">Abrir WhatsApp</a>
-      </div>
-      <div class="card">
-        <h4>Email</h4>
-        <p>Envíanos tu consulta o archivos por correo.</p>
-        <a href="formulario.html" class="btn btn-primary">Formulario de contacto</a>
-      </div>
+<section id="contactos" class="fade-in">
+  <h3>Contacto</h3>
+  <div class="cards">
+    <div class="card">
+      <h4>WhatsApp</h4>
+      <p>Contacta con nosotros para pedidos rápidos o dudas.</p>
+      <a href="https://wa.me/1234567890" target="_blank" class="btn btn-primary">Abrir WhatsApp</a>
     </div>
-  </section>
+    <div class="card">
+      <h4>Email</h4>
+      <p>Envíanos tu consulta o archivos por correo.</p>
+      <a href="formulario.html" class="btn btn-primary">Formulario de contacto</a>
+    </div>
+  </div>
+</section>
+
 
   <section class="trust fade-in">
     <div class="trust-item">
@@ -533,3 +572,5 @@ heroObserver.observe(hero);
 
 </body>
 </html>
+
+
