@@ -153,7 +153,17 @@ section h3 {
   transition: all 0.7s ease;
 }
 .card:hover::after { left: 125%; }
-.card img { width: 100%; border-radius: 8px; margin-bottom: 10px; background: #222; height: 120px; object-fit: cover; transition: transform 0.4s ease, filter 0.4s ease; }
+.card img {
+  width: 100%;
+  height: auto; /* altura proporcional */
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: #222;
+  object-fit: cover;
+  max-height: 200px; /* opcional para no estirarse demasiado */
+  transition: transform 0.4s ease, filter 0.4s ease;
+}
+
 .card img:hover { transform: scale(1.05); filter: brightness(1.1); }
 .card h4 { font-size: 14px; margin-bottom: 8px; font-weight: 500; }
 .card p { font-size: 13px; color: #aaa; margin-bottom: 10px; font-weight: 400; }
@@ -277,9 +287,8 @@ footer {
 <body>
 
   <header>
-    <h1>3D Factory</h1>
+    <h1>LabDesigner3D</h1>
     <nav>
-      <a href="#pedido">Pedido 3D</a>
       <a href="#catalogo">Catálogo</a>
       <a href="#contacto">Contacto</a>
     </nav>
@@ -327,7 +336,7 @@ footer {
 
     <!-- Producto 4 -->
     <div class="card">
-      <img src="c:\Users\CHUWI\Downloads\1copo.PNG" alt="Decoracion navideña" />
+      <img src="https://preview.free3d.com/img/2018/12/2273071333585716888/c37vz6q8.jpg" alt="Decoracion navideña" />
       <h4>Decoración navidad</h4>
       <p>Copo de nieve impreso en la mejor calidad.</p>
       <a href="producto.html?id=decoracion-navidad" class="btn btn-primary">Ver producto</a>
@@ -463,6 +472,8 @@ heroObserver.observe(hero);
 <body>
 </body>
 </html>
+
+
 
 
 
