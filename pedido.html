@@ -1,88 +1,272 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pedido de impresión 3D</title>
+<meta charset="UTF-8">
+<title>STL Viewer 2D</title>
 
-  <!-- Fuente corporativa -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Montserrat', sans-serif;
-    }
+<style>
+* { box-sizing: border-box; font-family: 'Inter', sans-serif; }
 
-    body {
-      background: #000;
-      color: #fff;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #1b1b1b, #0a0a0a);
+  color: #eaeaea;
+  min-height: 100vh;
+}
 
-    .container {
-      width: 100%;
-      max-width: 600px;
-      padding: 40px;
-    }
+/* SCREENS */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity .5s ease, transform .5s ease;
+}
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(.97);
+}
 
-    h1 {
-      font-size: 32px;
-      font-weight: 600;
-      margin-bottom: 15px;
-    }
+/* BUTTONS */
+.btn-primary {
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #0D47A1, #1565C0, #42A5F5);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: transform .2s, box-shadow .2s;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 25px rgba(66,165,245,.6);
+}
 
-    p {
-      color: #aaa;
-      font-size: 15px;
-      margin-bottom: 40px;
-      line-height: 1.6;
-    }
+/* UPLOAD */
+.upload-box {
+  background: #151515;
+  padding: 50px;
+  border-radius: 22px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+.file { margin-top: 15px; color: #6dd3ff; opacity: 0; }
+.file.show { opacity: 1; }
+#viewBtn { display: none; }
+input { display: none; }
 
-    .placeholder {
-      border: 1px dashed #333;
-      border-radius: 12px;
-      padding: 40px;
-      text-align: center;
-      color: #666;
-      font-size: 14px;
-    }
-
-    a.back {
-      display: inline-block;
-      margin-top: 40px;
-      color: #888;
-      text-decoration: none;
-      font-size: 14px;
-    }
-
-    a.back:hover {
-      color: #fff;
-    }
-  </style>
+/* VIEWER */
+.viewer-layout {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-rows: 60px 1fr;
+}
+.topbar {
+  background: #121212;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
+.main {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 20px;
+  padding: 20px;
+}
+.sidebar {
+  background: #141414;
+  border-radius: 16px;
+  padding: 20px;
+}
+.viewer {
+  background: #0b0b0b;
+  border-radius: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: auto;
+}
+canvas {
+  background: #000;
+  border-radius: 14px;
+  cursor: grab;
+}
+canvas:active { cursor: grabbing; }
+</style>
 </head>
+
 <body>
 
-  <div class="container">
-    <h1>Pedido de impresión 3D</h1>
-    <p>
-      Aquí podrás subir tu archivo, elegir materiales y solicitar presupuesto.
-      Estamos preparando esta sección.
-    </p>
-
-    <div class="placeholder">
-      Formulario de pedido en desarrollo
-    </div>
-
-    <a href="index.html" class="back">← Volver a inicio</a>
+<!-- UPLOAD -->
+<div class="screen" id="uploadScreen">
+  <div class="upload-box">
+    <h1>Subir archivo STL</h1>
+    <input type="file" id="fileInput" accept=".stl">
+    <button id="uploadBtn" class="btn-primary">Seleccionar archivo</button>
+    <div class="file" id="fileName"></div>
+    <button id="viewBtn" class="btn-primary">Visualizar</button>
   </div>
+</div>
+
+<!-- VIEWER -->
+<div class="screen hidden" id="viewerScreen">
+  <div class="viewer-layout">
+    <div class="topbar">
+      <h3>Vista 2D STL</h3>
+      <button id="backBtn">← Volver</button>
+    </div>
+    <div class="main">
+      <div class="sidebar">
+        <p>🖱 Rueda: Zoom (sobre la pieza)</p>
+        <p>✋ Arrastrar: Mover</p>
+      </div>
+      <div class="viewer">
+        <canvas id="canvas"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let pts=[], scale=1, offsetX=0, offsetY=0;
+let dragging=false, lastX=0, lastY=0;
+let minX, maxX, minY, maxY;
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+uploadBtn.onclick = () => fileInput.click();
+
+fileInput.onchange = () => {
+  const f = fileInput.files[0];
+  if (!f || !f.name.endsWith('.stl')) return;
+
+  const r = new FileReader();
+  r.onload = e => {
+    localStorage.setItem(
+      'stl-binary',
+      btoa(String.fromCharCode(...new Uint8Array(e.target.result)))
+    );
+    fileName.textContent = `✔ ${f.name}`;
+    fileName.classList.add('show');
+    viewBtn.style.display='block';
+  };
+  r.readAsArrayBuffer(f);
+};
+
+viewBtn.onclick = () => {
+  uploadScreen.classList.add('hidden');
+  viewerScreen.classList.remove('hidden');
+  loadSTL();
+};
+
+backBtn.onclick = () => {
+  viewerScreen.classList.add('hidden');
+  uploadScreen.classList.remove('hidden');
+};
+
+function loadSTL(){
+  const size = Math.min(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+  canvas.width = size;
+  canvas.height = size;
+
+  const buffer = Uint8Array.from(atob(localStorage.getItem('stl-binary')),c=>c.charCodeAt(0)).buffer;
+  const v = new DataView(buffer);
+  const faces = v.getUint32(80,true);
+  let o=84; pts=[];
+
+  for(let i=0;i<faces;i++){
+    o+=12;
+    for(let j=0;j<3;j++){
+      const x=v.getFloat32(o,true);o+=4;
+      const y=v.getFloat32(o,true);o+=4;
+      o+=4;
+      pts.push({x,y});
+    }
+    o+=2;
+  }
+
+  minX=Math.min(...pts.map(p=>p.x));
+  maxX=Math.max(...pts.map(p=>p.x));
+  minY=Math.min(...pts.map(p=>p.y));
+  maxY=Math.max(...pts.map(p=>p.y));
+
+  const maxDim=Math.max(maxX-minX,maxY-minY);
+  scale=(size*0.7)/maxDim;
+  offsetX=size/2;
+  offsetY=size/2;
+
+  draw();
+}
+
+function clampOffsets(){
+  const margin = 60;
+  const w = (maxX-minX)*scale;
+  const h = (maxY-minY)*scale;
+
+  offsetX = Math.min(canvas.width - margin, Math.max(margin, offsetX));
+  offsetY = Math.min(canvas.height - margin, Math.max(margin, offsetY));
+}
+
+function draw(){
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.translate(offsetX,offsetY);
+  ctx.scale(scale,scale);
+  ctx.strokeStyle='#6dd3ff';
+  ctx.lineWidth=1/scale;
+
+  for(let i=0;i<pts.length;i+=3){
+    ctx.beginPath();
+    ctx.moveTo(pts[i].x,pts[i].y);
+    ctx.lineTo(pts[i+1].x,pts[i+1].y);
+    ctx.lineTo(pts[i+2].x,pts[i+2].y);
+    ctx.closePath();
+    ctx.stroke();
+  }
+}
+
+/* CONTROLS */
+canvas.addEventListener('wheel', e=>{
+  const rect = canvas.getBoundingClientRect();
+  if (
+    e.clientX<rect.left || e.clientX>rect.right ||
+    e.clientY<rect.top || e.clientY>rect.bottom
+  ) return;
+
+  e.preventDefault();
+  scale *= e.deltaY<0 ? 1.1 : 0.9;
+  clampOffsets();
+  draw();
+},{passive:false});
+
+canvas.onmousedown = e=>{
+  dragging=true;
+  lastX=e.clientX;
+  lastY=e.clientY;
+};
+window.onmouseup = ()=>dragging=false;
+
+window.onmousemove = e=>{
+  if(!dragging) return;
+  offsetX+=e.clientX-lastX;
+  offsetY+=e.clientY-lastY;
+  lastX=e.clientX;
+  lastY=e.clientY;
+  clampOffsets();
+  draw();
+};
+</script>
 
 </body>
 </html>
