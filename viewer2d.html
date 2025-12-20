@@ -2,115 +2,83 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>STL Viewer 2D</title>
+<title>STL Viewer 3D Sólido</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
-* {
-  box-sizing: border-box;
-  font-family: 'Inter', sans-serif;
-}
+* { box-sizing: border-box; font-family: 'Inter', sans-serif; }
 
 body {
   margin: 0;
-  background: radial-gradient(circle at top, #1c1c1c, #0b0b0b);
-  color: #eaeaea;
   height: 100vh;
+  background:
+    radial-gradient(circle at 30% 20%, #2a2a2a, #0b0b0b 70%);
+  color: #eaeaea;
   overflow: hidden;
 }
 
-/* ---------- TRANSICIONES ---------- */
+/* SCREENS */
 .screen {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity .6s ease, transform .6s ease;
 }
 
-.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(.97);
-}
+.hidden { display: none; }
 
-/* ---------- UPLOAD ---------- */
+/* UPLOAD */
 .upload-box {
-  background: #151515;
-  padding: 50px 45px;
+  background: linear-gradient(180deg, #1b1b1b, #121212);
+  padding: 42px;
   border-radius: 22px;
-  width: 100%;
-  max-width: 420px;
+  width: 380px;
   text-align: center;
-  box-shadow: 0 25px 50px rgba(0,0,0,.7);
+  box-shadow: 0 30px 60px rgba(0,0,0,.6);
 }
 
-.upload-box h1 {
-  margin-bottom: 25px;
+.upload-box h2 {
+  margin-bottom: 22px;
+  font-weight: 500;
 }
 
-.upload-box button {
+button {
   width: 100%;
-  padding: 16px;
+  padding: 15px;
   border-radius: 14px;
   border: none;
-  background: linear-gradient(135deg, #1976D2, #42A5F5);
+  background: linear-gradient(135deg, #1e88e5, #64b5f6);
   color: #fff;
   font-size: 16px;
   cursor: pointer;
-  margin-top: 12px;
+  transition: transform .15s ease, box-shadow .15s ease;
 }
 
-.upload-box .file {
-  margin-top: 20px;
-  font-size: 14px;
-  color: #6dd3ff;
-  opacity: 0;
-  transition: opacity .4s;
-}
-
-.upload-box .file.show {
-  opacity: 1;
-}
-
-#viewBtn {
-  display: none;
-  background: linear-gradient(135deg, #00C853, #64DD17);
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(100,181,246,.5);
 }
 
 input { display: none; }
 
-/* ---------- VIEWER ---------- */
-.viewer-layout {
+/* VIEWER */
+.viewer {
   width: 100%;
   height: 100%;
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  padding: 20px;
-  gap: 20px;
-}
-
-.sidebar {
-  background: #141414;
-  border-radius: 18px;
-  padding: 20px;
-}
-
-.viewer {
-  background: #090909;
-  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 canvas {
-  width: 90%;
-  height: 90%;
-  background: #000;
-  border-radius: 12px;
+  background:
+    radial-gradient(circle at top, #1a1a1a, #050505);
+  border-radius: 22px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.05),
+    0 40px 80px rgba(0,0,0,.8);
 }
 </style>
 </head>
@@ -118,117 +86,112 @@ canvas {
 <body>
 
 <!-- UPLOAD -->
-<div class="screen" id="uploadScreen">
+<div class="screen" id="upload">
   <div class="upload-box">
-    <h1>📦 Subir archivo STL</h1>
-
-    <input type="file" id="fileInput" accept=".stl">
-    <button id="uploadBtn">Seleccionar archivo</button>
-
-    <div class="file" id="fileName"></div>
-
-    <button id="viewBtn">Visualizar</button>
+    <h2>Subir archivo STL</h2>
+    <input type="file" id="file" accept=".stl">
+    <button onclick="file.click()">Seleccionar STL</button>
   </div>
 </div>
 
 <!-- VIEWER -->
-<div class="screen hidden" id="viewerScreen">
-  <div class="viewer-layout">
-    <div class="sidebar">
-      <h3>Vista 2D</h3>
-      <p>Proyección XY</p>
-    </div>
-    <div class="viewer">
-      <canvas id="canvas"></canvas>
-    </div>
-  </div>
+<div class="screen hidden" id="viewer">
+  <canvas id="canvas"></canvas>
 </div>
 
 <script>
-const uploadScreen = document.getElementById('uploadScreen');
-const viewerScreen = document.getElementById('viewerScreen');
-const input = document.getElementById('fileInput');
-const uploadBtn = document.getElementById('uploadBtn');
-const viewBtn = document.getElementById('viewBtn');
-const name = document.getElementById('fileName');
+const file = document.getElementById('file');
+const upload = document.getElementById('upload');
+const viewer = document.getElementById('viewer');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
-uploadBtn.onclick = () => input.click();
-
-input.onchange = () => {
-  const file = input.files[0];
-  if (!file || !file.name.endsWith('.stl')) return;
-
-  const reader = new FileReader();
-  reader.onload = e => {
-    const base64 = btoa(
-      new Uint8Array(e.target.result)
-        .reduce((d, b) => d + String.fromCharCode(b), '')
-    );
-    localStorage.setItem('stl-binary', base64);
-
-    name.textContent = `✔ ${file.name}`;
-    name.classList.add('show');
-    viewBtn.style.display = 'block';
-  };
-  reader.readAsArrayBuffer(file);
+file.onchange = () => {
+  const r = new FileReader();
+  r.onload = e => drawSTL(e.target.result);
+  r.readAsArrayBuffer(file.files[0]);
 };
 
-viewBtn.onclick = () => {
-  uploadScreen.classList.add('hidden');
-  viewerScreen.classList.remove('hidden');
-  drawSTL();
-};
+function drawSTL(buffer) {
+  upload.classList.add('hidden');
+  viewer.classList.remove('hidden');
 
-function drawSTL() {
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-
-  const size = Math.min(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+  const size = Math.min(innerWidth, innerHeight) * 0.88;
   canvas.width = size;
   canvas.height = size;
 
-  const base64 = localStorage.getItem('stl-binary');
-  const buffer = Uint8Array.from(atob(base64), c => c.charCodeAt(0)).buffer;
   const view = new DataView(buffer);
-
   const faces = view.getUint32(80, true);
-  let offset = 84;
-  const pts = [];
+  let o = 84;
+  const tris = [];
 
   for (let i = 0; i < faces; i++) {
-    offset += 12;
+    const nx = view.getFloat32(o, true); o+=4;
+    const ny = view.getFloat32(o, true); o+=4;
+    const nz = view.getFloat32(o, true); o+=4;
+
+    const tri = [];
     for (let v = 0; v < 3; v++) {
-      const x = view.getFloat32(offset, true); offset += 4;
-      const y = view.getFloat32(offset, true); offset += 4;
-      offset += 4;
-      pts.push({ x, y });
+      tri.push({
+        x: view.getFloat32(o, true),
+        y: view.getFloat32(o+4, true),
+        z: view.getFloat32(o+8, true)
+      });
+      o += 12;
     }
-    offset += 2;
+    tris.push({ tri, normal:{x:nx,y:ny,z:nz} });
+    o += 2;
   }
 
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  pts.forEach(p => {
-    minX = Math.min(minX, p.x);
-    maxX = Math.max(maxX, p.x);
-    minY = Math.min(minY, p.y);
-    maxY = Math.max(maxY, p.y);
-  });
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9,minZ=1e9,maxZ=-1e9;
+  tris.forEach(t=>t.tri.forEach(p=>{
+    minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x);
+    minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y);
+    minZ=Math.min(minZ,p.z); maxZ=Math.max(maxZ,p.z);
+  }));
 
-  const scale = (size * 0.8) / Math.max(maxX - minX, maxY - minY);
-  ctx.translate(size / 2, size / 2);
-  ctx.strokeStyle = '#6dd3ff';
-  ctx.lineWidth = 0.6;
+  const scale = size*0.46/Math.max(maxX-minX,maxY-minY);
+  const depth = scale*0.65;
 
-  for (let i = 0; i < pts.length; i += 3) {
-    ctx.beginPath();
-    for (let j = 0; j < 3; j++) {
-      const px = (pts[i + j].x - (minX + maxX) / 2) * scale;
-      const py = (pts[i + j].y - (minY + maxY) / 2) * scale;
-      j === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-    }
-    ctx.closePath();
-    ctx.stroke();
+  function project(p){
+    const x=p.x-(minX+maxX)/2;
+    const y=p.y-(minY+maxY)/2;
+    const z=p.z-(minZ+maxZ)/2;
+    return {
+      x:(x-y)*scale,
+      y:(x+y)*scale*0.5 - z*depth,
+      z
+    };
   }
+
+  const light = { x:0.3, y:0.5, z:1 };
+
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,size,size);
+  ctx.translate(size/2,size/2);
+
+  tris
+    .map(t=>{
+      const pts=t.tri.map(project);
+      const avgZ=pts.reduce((s,p)=>s+p.z,0)/3;
+      const n=t.normal;
+      const dot=Math.max(0,(n.x*light.x+n.y*light.y+n.z*light.z));
+      return {pts,avgZ,shade:dot};
+    })
+    .sort((a,b)=>a.avgZ-b.avgZ)
+    .forEach(f=>{
+      ctx.beginPath();
+      f.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+      ctx.closePath();
+
+      const base = 90 + f.shade*140;
+      ctx.fillStyle = `rgb(${base}, ${base+25}, ${base+60})`;
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+      ctx.lineWidth = 0.6;
+      ctx.stroke();
+    });
 }
 </script>
 
